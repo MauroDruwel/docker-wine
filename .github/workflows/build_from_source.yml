@@ -6,6 +6,7 @@ on:
       - master
   schedule:
     - cron: '0 3 * * MON'
+  workflow_dispatch:
 
 jobs:
   docker:
@@ -88,12 +89,13 @@ jobs:
           path: wine-build
           key: ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.stage }}-${{ github.run_id }}-${{ hashFiles('**/lockfiles') }}
       -
-        name: Login to DockerHub
+        name: Login to GitHub Container Registry
         if: matrix.stage == 3
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Extract wine version
         id: wine_ver
@@ -126,7 +128,7 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           push: true
           tags:
-            scottyhardy/docker-wine:${{ matrix.platform }},
-            scottyhardy/docker-wine:devel-${{ steps.wine_ver.outputs.value }}-${{ matrix.platform }},
-            scottyhardy/docker-wine:devel-${{ steps.wine_ver.outputs.value }}-${{ matrix.platform }}-${{ steps.timestamp.outputs.value }}
+            ghcr.io/${{ github.repository_owner }}/docker-wine:${{ matrix.platform }},
+            ghcr.io/${{ github.repository_owner }}/docker-wine:devel-${{ steps.wine_ver.outputs.value }}-${{ matrix.platform }},
+            ghcr.io/${{ github.repository_owner }}/docker-wine:devel-${{ steps.wine_ver.outputs.value }}-${{ matrix.platform }}-${{ steps.timestamp.outputs.value }}
           target: ci-final
